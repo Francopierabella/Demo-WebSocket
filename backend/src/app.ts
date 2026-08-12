@@ -1,0 +1,53 @@
+import express from "express";
+import cors from "cors";
+import {createServer} from "http";
+import { initWebSocket } from "./webSocket/websocket";
+
+
+// Creamos la aplicación de Express.
+// Express se encarga de manejar las rutas y peticiones HTTP.
+const app = express();
+
+
+// Habilitamos CORS para permitir que el frontend (React),
+// que se ejecuta en otro origen/puerto, pueda comunicarse con el backend.
+app.use(cors());
+
+// Permite que Express pueda interpretar los datos enviados
+// en formato JSON dentro de las peticiones HTTP.
+app.use(express.json());
+
+// Ruta HTTP de prueba.
+// Permite comprobar rápidamente que el backend está funcionando.
+app.get("/", (_, res) => {
+
+    res.json({
+
+        message: "Backend funcionando"
+
+    });
+
+});
+
+
+// Creamos un servidor HTTP utilizando la aplicación de Express.
+// Este servidor será compartido tanto por Express como por WebSocket.
+const server = createServer(app);
+
+// Inicializamos WebSocket utilizando el mismo servidor HTTP.
+// A partir de acá, WebSocket puede manejar las conexiones en tiempo real.
+initWebSocket(server);
+
+// Puerto donde escuchará nuestro servidor.
+const PORT = 3000;
+
+
+// Ponemos el servidor HTTP en funcionamiento.
+// "0.0.0.0" permite aceptar conexiones desde otros dispositivos
+// de la misma red, por ejemplo nuestro teléfono.
+server.listen(PORT, "0.0.0.0", () => {
+
+  console.log("Servidor corriendo...");
+
+});
+
