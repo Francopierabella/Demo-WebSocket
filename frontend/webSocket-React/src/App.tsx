@@ -1,4 +1,4 @@
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./App.css"
 
 
@@ -46,7 +46,8 @@ function App() {
 
 
     // Creamos una nueva conexión WebSocket con nuestro servidor.
-    const ws = new WebSocket("ws://10.0.26.204:3000");
+    const host = window.location.hostname || "localhost";
+    const ws = new WebSocket(`ws://${host}:3000`);
 
 
     // Se ejecuta cuando la conexión WebSocket se establece correctamente.
@@ -182,8 +183,8 @@ function App() {
     };
 
 
-  // El array vacío indica que este efecto se ejecuta solamente
-  // cuando el componente se monta.
+    // El array vacío indica que este efecto se ejecuta solamente
+    // cuando el componente se monta.
   }, []);
 
 
@@ -191,270 +192,270 @@ function App() {
 
     messagesEndRef.current?.scrollIntoView({
 
-        behavior: "smooth"
+      behavior: "smooth"
 
     });
 
-}, [messages]);
+  }, [messages]);
 
-useEffect(() => {
+  useEffect(() => {
 
-  if (joined) {
-    inputRef.current?.focus();
+    if (joined) {
+      inputRef.current?.focus();
+    }
+
+  }, [joined]);
+
+
+  // --------------------------------------------------
+  // INGRESAR AL CHAT
+  // --------------------------------------------------
+
+  function joinChat() {
+
+    // Si todavía no existe una conexión WebSocket,
+    // no podemos enviar el evento JOIN.
+    if (!socket) return;
+
+
+    // Evitamos que el usuario pueda entrar sin escribir un nombre.
+    // trim() elimina espacios al principio y al final.
+    if (username.trim() === "") return;
+
+
+    // Enviamos al servidor un evento de tipo JOIN.
+    // JSON.stringify() convierte el objeto JavaScript en JSON
+    // para poder transmitirlo mediante WebSocket.
+    socket.send(
+      JSON.stringify({
+        type: "JOIN",
+        username: username
+      })
+    );
+
+
+    // Cambiamos el estado para indicar que el usuario ya ingresó al chat.
+    // Esto provoca que React muestre la pantalla principal.
+    setJoined(true);
+
   }
 
-}, [joined]);
+
+  // --------------------------------------------------
+  // ENVIAR MENSAJE
+  // --------------------------------------------------
+
+  function sendMessage() {
+
+    // Sin conexión WebSocket no podemos enviar el mensaje.
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
 
-// --------------------------------------------------
-// INGRESAR AL CHAT
-// --------------------------------------------------
-
-function joinChat() {
-
-  // Si todavía no existe una conexión WebSocket,
-  // no podemos enviar el evento JOIN.
-  if (!socket) return;
+    // Evitamos enviar mensajes vacíos o solamente con espacios.
+    if (input.trim() === "") return;
 
 
-  // Evitamos que el usuario pueda entrar sin escribir un nombre.
-  // trim() elimina espacios al principio y al final.
-  if (username.trim() === "") return;
+    // Enviamos el evento CHAT_MESSAGE al servidor.
+    // El servidor será el encargado de distribuirlo
+    // mediante broadcast a los demás clientes.
+    socket.send(
+      JSON.stringify({
+        type: "CHAT_MESSAGE",
+        username,
+        message: input
+      })
+    );
 
 
-  // Enviamos al servidor un evento de tipo JOIN.
-  // JSON.stringify() convierte el objeto JavaScript en JSON
-  // para poder transmitirlo mediante WebSocket.
-  socket.send(
-    JSON.stringify({
-      type: "JOIN",
-      username: username
-    })
-  );
+    // Limpiamos el input después de enviar el mensaje.
+    setInput("");
 
 
-  // Cambiamos el estado para indicar que el usuario ya ingresó al chat.
-  // Esto provoca que React muestre la pantalla principal.
-  setJoined(true);
+    // Devolvemos automáticamente el foco al input
+    // para poder seguir escribiendo sin hacer click nuevamente.
+    inputRef.current?.focus();
 
-}
-
-
-// --------------------------------------------------
-// ENVIAR MENSAJE
-// --------------------------------------------------
-
-function sendMessage() {
-
-  // Sin conexión WebSocket no podemos enviar el mensaje.
-  if (!socket) return;
+  }
 
 
-  // Evitamos enviar mensajes vacíos o solamente con espacios.
-  if (input.trim() === "") return;
+  // --------------------------------------------------
+  // PANTALLA DE INGRESO
+  // --------------------------------------------------
+
+  // Mientras joined sea false mostramos únicamente
+  // el formulario para ingresar al chat.
+  if (!joined) {
+
+    return (
+
+      <div className="login-container">
+
+        <div className="login-card">
+
+          <div className="login-icon">
+            💬
+          </div>
+
+          <h1>Chat WebSocket</h1>
+
+          <p>
+            Bienvenido al chat en tiempo real
+          </p>
 
 
-  // Enviamos el evento CHAT_MESSAGE al servidor.
-  // El servidor será el encargado de distribuirlo
-  // mediante broadcast a los demás clientes.
-  socket.send(
-    JSON.stringify({
-      type: "CHAT_MESSAGE",
-      username,
-      message: input
-    })
-  );
+          <input
+
+            type="text"
+
+            // Asociamos este input con inputRef.
+            // Esto permite acceder al elemento directamente
+            // desde JavaScript mediante inputRef.current.
+            ref={inputRef}
+
+            placeholder="Ingresá tu nombre..."
+
+            // El valor del input está controlado por el estado username.
+            value={username}
+
+            // Cada vez que el usuario escribe, actualizamos el estado.
+            onChange={(e) => setUsername(e.target.value)}
+
+            // Permite ingresar al chat presionando Enter
+            // en lugar de tener que hacer click en el botón.
+            onKeyDown={(e) => {
+
+              if (e.key === "Enter") {
+
+                joinChat();
+
+              }
+
+            }}
+
+          />
 
 
-  // Limpiamos el input después de enviar el mensaje.
-  setInput("");
+          <button onClick={joinChat}>
+            Entrar al chat
+          </button>
 
-
-  // Devolvemos automáticamente el foco al input
-  // para poder seguir escribiendo sin hacer click nuevamente.
-  inputRef.current?.focus();
-
-}
-
-
-// --------------------------------------------------
-// PANTALLA DE INGRESO
-// --------------------------------------------------
-
-// Mientras joined sea false mostramos únicamente
-// el formulario para ingresar al chat.
-if (!joined) {
-
-  return (
-
-    <div className="login-container">
-
-      <div className="login-card">
-
-        <div className="login-icon">
-          💬
         </div>
-
-        <h1>Chat WebSocket</h1>
-
-        <p>
-          Bienvenido al chat en tiempo real
-        </p>
-
-
-        <input
-
-          type="text"
-
-          // Asociamos este input con inputRef.
-          // Esto permite acceder al elemento directamente
-          // desde JavaScript mediante inputRef.current.
-          ref={inputRef}
-
-          placeholder="Ingresá tu nombre..."
-
-          // El valor del input está controlado por el estado username.
-          value={username}
-
-          // Cada vez que el usuario escribe, actualizamos el estado.
-          onChange={(e) => setUsername(e.target.value)}
-
-          // Permite ingresar al chat presionando Enter
-          // en lugar de tener que hacer click en el botón.
-          onKeyDown={(e) => {
-
-            if (e.key === "Enter") {
-
-              joinChat();
-
-            }
-
-          }}
-
-        />
-
-
-        <button onClick={joinChat}>
-          Entrar al chat
-        </button>
 
       </div>
 
-    </div>
+    );
 
-  );
-
-}
+  }
 
 
-// --------------------------------------------------
-// PANTALLA PRINCIPAL DEL CHAT
-// --------------------------------------------------
+  // --------------------------------------------------
+  // PANTALLA PRINCIPAL DEL CHAT
+  // --------------------------------------------------
 
-return (
+  return (
 
-  <div className="container">
-
-
-    <div className="chat-container">
-
-      <h1>💬 Chat WebSocket</h1>
+    <div className="container">
 
 
-      <div className="messages">
+      <div className="chat-container">
 
-        {messages.map((m, index) => (
+        <h1>💬 Chat WebSocket</h1>
 
-          <p className="message" key={index}>
 
-            {/* Mostramos quién envió el mensaje. */}
-            <strong>{m.username}</strong>
+        <div className="messages">
 
-            : {m.message}
+          {messages.map((m, index) => (
+
+            <p className="message" key={index}>
+
+              {/* Mostramos quién envió el mensaje. */}
+              <strong>{m.username}</strong>
+
+              : {m.message}
+
+            </p>
+
+          ))}
+
+
+          {/* // Este elemento funciona como punto de referencia
+        // para poder llevar el scroll hasta el final de los mensajes. */}
+          <div ref={messagesEndRef}></div>
+
+        </div>
+
+
+        <div className="input-container">
+
+          <input
+
+            // Usamos la misma referencia para poder devolver
+            // automáticamente el foco al campo después de enviar.
+            ref={inputRef}
+
+            value={input}
+
+            onChange={(e) => setInput(e.target.value)}
+
+            // Permite enviar el mensaje presionando Enter.
+            onKeyDown={(e) => {
+
+              if (e.key === "Enter") {
+
+                sendMessage();
+
+              }
+
+            }}
+
+            placeholder="Escribí un mensaje..."
+
+          />
+
+
+          <button onClick={sendMessage}>
+            Enviar
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* 
+    // --------------------------------------------------
+    // LISTA DE USUARIOS
+    // -------------------------------------------------- */}
+
+      <div className="users-container">
+
+        <h3>Usuarios conectados</h3>
+
+
+        {users.map((user, index) => (
+
+          <p key={index}>
+
+            🟢 {user}
+
+
+            {/* // Comparamos el nombre de cada usuario con
+          // el username del cliente actual.
+          // Si coinciden, mostramos "(Tú)". */}
+            {user === username && (
+
+              <strong> (Tú)</strong>
+
+            )}
 
           </p>
 
         ))}
 
-
-        {/* // Este elemento funciona como punto de referencia
-        // para poder llevar el scroll hasta el final de los mensajes. */}
-        <div ref={messagesEndRef}></div>
-
-      </div>
-
-
-      <div className="input-container">
-
-        <input
-
-          // Usamos la misma referencia para poder devolver
-          // automáticamente el foco al campo después de enviar.
-          ref={inputRef}
-
-          value={input}
-
-          onChange={(e) => setInput(e.target.value)}
-
-          // Permite enviar el mensaje presionando Enter.
-          onKeyDown={(e) => {
-
-            if (e.key === "Enter") {
-
-              sendMessage();
-
-            }
-
-          }}
-
-          placeholder="Escribí un mensaje..."
-
-        />
-
-
-        <button onClick={sendMessage}>
-          Enviar
-        </button>
-
       </div>
 
     </div>
 
-{/* 
-    // --------------------------------------------------
-    // LISTA DE USUARIOS
-    // -------------------------------------------------- */}
-
-    <div className="users-container">
-
-      <h3>Usuarios conectados</h3>
-
-
-      {users.map((user, index) => (
-
-        <p key={index}>
-
-          🟢 {user}
-
-
-          {/* // Comparamos el nombre de cada usuario con
-          // el username del cliente actual.
-          // Si coinciden, mostramos "(Tú)". */}
-          {user === username && (
-
-            <strong> (Tú)</strong>
-
-          )}
-
-        </p>
-
-      ))}
-
-    </div>
-
-  </div>
-
-);
+  );
 }
 
 export default App;
