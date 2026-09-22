@@ -7,14 +7,11 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const http_1 = require("http");
 const websocket_1 = require("./webSocket/websocket");
-// Creamos la aplicación de Express.
-// Express se encarga de manejar las rutas y peticiones HTTP.
+// Creamos la aplicación de Express que se encarga de manejar las rutas y peticiones HTTP.
 const app = (0, express_1.default)();
 // Habilitamos CORS para permitir que el frontend (React),
 // que se ejecuta en otro origen/puerto, pueda comunicarse con el backend.
 app.use((0, cors_1.default)());
-// Permite que Express pueda interpretar los datos enviados
-// en formato JSON dentro de las peticiones HTTP.
 app.use(express_1.default.json());
 // Creamos un servidor HTTP utilizando la aplicación de Express.
 // Este servidor será compartido tanto por Express como por WebSocket.

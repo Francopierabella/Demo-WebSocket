@@ -146,12 +146,19 @@ input {
     background: #005fd4;
 }
 
-.input-container .btn-leave {
+.chat-container .btn-leave {
     background-color: red;
     color: #fff;
+    margin-bottom: 15px;
+    width: 100%;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: .2s;
 }
 
-.input-container .btn-leave:hover {
+.chat-container .btn-leave:hover {
     background-color: rgb(115, 3, 3);
 }
 

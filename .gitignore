@@ -1,13 +1,4 @@
-# Ignorar la carpeta de documentación y los artefactos de compilación
 
-backend/dist/
-frontend/webSocket-React/dist/
-frontend/webSocket-React/.vite/
-
-# Otros directorios comunes
 node_modules/
 .vscode/
-
-# Archivos temporales y logs
-*.log
-    
+dist/

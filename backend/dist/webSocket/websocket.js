@@ -4,14 +4,18 @@ exports.initWebSocket = initWebSocket;
 const ws_1 = require("ws");
 // Map que relaciona cada conexión WebSocket con el nombre del usuario.
 // Nos permite saber qué usuario corresponde a cada socket conectado.
+// Un Map es una estructura de datos especial de JavaScript que te permite usar cualquier cosa como clave,
+// en este caso usamos el WebSocket como clave y el nombre del usuario como valor.
+// Seria basicamente que todo el objeto conexion de webSocket, que contendria
+// muchas propiedades de la conexion (estado, direccion, etc), lo representamos como el nombre de usuario.
 const connectedUsers = new Map();
 // Función auxiliar reutilizable para enviar un evento a todos los clientes conectados (Broadcast).
-// Convierte el payload a JSON una sola vez antes de iterar, optimizando el rendimiento.
 function broadcast(wss, payload) {
     const message = JSON.stringify(payload);
     wss.clients.forEach((client) => {
         // Solo enviamos el mensaje si la conexión está abierta.
         if (client.readyState === ws_1.WebSocket.OPEN) {
+            console.log("MESSAGE:", message);
             client.send(message);
         }
     });
@@ -36,22 +40,18 @@ function initWebSocket(server) {
     wss.on("connection", (socket) => {
         // socket representa únicamente al cliente que acaba de conectarse.
         // Por eso el mensaje de bienvenida se envía solo a él.
-        socket.send(JSON.stringify({
-            type: "WELCOME",
-            message: "Bienvenido al chat!",
-        }));
+        socket.send(JSON.stringify({ type: "WELCOME", message: "Bienvenido al chat!" }));
         // Escuchamos todos los mensajes enviados por este cliente.
         socket.on("message", (raw) => {
             try {
-                // El mensaje llega como datos "en bruto". Seria tipo {"username":"Franco","message":"Hola"}
-                // Primero lo convertimos a texto y después a un objeto JavaScript.
+                // El mensaje llega tipo {"username":"Franco","message":"Hola"}
+                console.log("RAW.toString():", raw.toString());
                 const data = JSON.parse(raw.toString());
+                console.log("DATA:", data);
                 // Todos nuestros mensajes tienen un "type" que indica
                 // qué acción quiere realizar el cliente.
                 switch (data.type) {
-                    // ------------------------------------------------
                     // EVENTO: JOIN
-                    // ------------------------------------------------
                     case "JOIN":
                         // Asociamos el socket actual con el nombre del usuario.
                         // De esta forma el servidor sabe quién está conectado.
@@ -66,9 +66,7 @@ function initWebSocket(server) {
                         // actualizada a todos los clientes para mantenerlos sincronizados.
                         broadcastUserList(wss);
                         break;
-                    // ------------------------------------------------
                     // EVENTO: CHAT_MESSAGE
-                    // ------------------------------------------------
                     case "CHAT_MESSAGE":
                         console.log(`${data.username}: ${data.message}`);
                         // Validamos que el socket que envía el mensaje esté registrado
@@ -85,6 +83,17 @@ function initWebSocket(server) {
                             message: data.message,
                         });
                         break;
+                    case "LEAVE":
+                        const leavingUser = connectedUsers.get(socket);
+                        if (leavingUser) {
+                            connectedUsers.delete(socket);
+                        }
+                        broadcast(wss, {
+                            type: "USER_LEFT",
+                            username: leavingUser,
+                        });
+                        broadcastUserList(wss);
+                        break;
                     // Si recibimos un tipo de evento que no conocemos,
                     // simplemente lo informamos por consola.
                     default:
@@ -97,9 +106,7 @@ function initWebSocket(server) {
                 console.error("Error al procesar el mensaje:", error);
             }
         });
-        // ------------------------------------------------
         // EVENTO: CLOSE
-        // ------------------------------------------------
         // Se ejecuta cuando el cliente cierra la conexión,
         // por ejemplo al cerrar la pestaña o abandonar la aplicación.
         socket.on("close", () => {

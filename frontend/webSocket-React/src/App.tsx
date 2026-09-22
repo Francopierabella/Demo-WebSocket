@@ -125,7 +125,7 @@ function App() {
   function joinChat() {
     // Si todavía no existe una conexión WebSocket,
     // no podemos enviar el evento JOIN.
-    if (!socket) return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
     // Evitamos que el usuario pueda entrar sin escribir un nombre.
     // trim() elimina espacios al principio y al final.
     if (username.trim() === "") return;
@@ -223,9 +223,10 @@ function App() {
     <div className="container">
       <div className="chat-container">
         <h1>💬 Chat WebSocket</h1>
+        <button className="btn-leave" onClick={leaveChat}> Salir del chat </button>
         <div className="messages">
           {messages.map((m, index) => (
-            <p className="message" key={index}>
+            <p className={"message"} key={index}>
               <strong>{m.username}</strong> : {m.message}
             </p>
           ))}
@@ -244,7 +245,6 @@ function App() {
             placeholder="Escribí un mensaje..."
           />
           <button onClick={sendMessage}>Enviar</button>
-          <button className="btn-leave" onClick={leaveChat}> Salir del chat </button>
         </div>
       </div>
       {/* // LISTA DE USUARIOS */}

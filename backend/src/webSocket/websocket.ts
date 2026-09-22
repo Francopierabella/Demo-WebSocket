@@ -97,9 +97,8 @@ export function initWebSocket(server: Server) {
             break;
           case "LEAVE":
             const leavingUser = connectedUsers.get(socket);
-            if (leavingUser) {
-              connectedUsers.delete(socket);
-            }
+            if (!leavingUser) return;
+            connectedUsers.delete(socket);
             broadcast(wss, {
               type: "USER_LEFT",
               username: leavingUser,
