@@ -36,20 +36,14 @@ function App() {
       switch (data.type) {
         // EVENTO: WELCOME
         case "WELCOME":
-          // Mensaje enviado únicamente al cliente
-          // que acaba de establecer la conexión.
           console.log(data.message);
           break;
         // EVENTO: CHAT_MESSAGE
         case "CHAT_MESSAGE":
-          // Agregamos el nuevo mensaje al final del array.
-          // "prev" representa el estado anterior de messages.
           setMessages((prev) => [...prev, data]);
           break;
         // EVENTO: USER_JOINED
         case "USER_JOINED":
-          // Agregamos un mensaje del sistema al chat
-          // informando que un usuario acaba de ingresar.
           setMessages(prev => [
             ...prev,
             {
@@ -60,8 +54,6 @@ function App() {
           break;
         // EVENTO: USER_LEFT
         case "USER_LEFT":
-          // Agregamos un mensaje del sistema al chat
-          // informando que un usuario abandonó la conversación.
           setMessages(prev => [
             ...prev,
             {
@@ -108,11 +100,7 @@ function App() {
 
   // INGRESAR AL CHAT
   function joinChat() {
-    // Si todavía no existe una conexión WebSocket,
-    // no podemos enviar el evento JOIN.
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    // Evitamos que el usuario pueda entrar sin escribir un nombre.
-    // trim() elimina espacios al principio y al final.
     if (username.trim() === "") return;
     // Enviamos al servidor un evento de tipo JOIN.
     socket.send(
@@ -121,8 +109,6 @@ function App() {
         username: username
       })
     );
-
-
     // Cambiamos el estado para indicar que el usuario ya ingresó al chat.
     // Esto provoca que React muestre la pantalla principal.
     setJoined(true);
@@ -130,10 +116,7 @@ function App() {
 
   // ENVIAR MENSAJE
   function sendMessage() {
-    // Sin conexión WebSocket no podemos enviar el mensaje.
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-
-    // Evitamos enviar mensajes vacíos o solamente con espacios.
     if (input.trim() === "") return;
     // Enviamos el evento CHAT_MESSAGE al servidor.
     // El servidor será el encargado de distribuirlo mediante broadcast a los demás clientes.
@@ -144,12 +127,8 @@ function App() {
         message: input
       })
     );
-
     // Limpiamos el input después de enviar el mensaje.
     setInput("");
-
-    // Devolvemos automáticamente el foco al input
-    // para poder seguir escribiendo sin hacer click nuevamente.
     inputRef.current?.focus();
 
   }
@@ -178,8 +157,6 @@ function App() {
             value={username}
             // Cada vez que el usuario escribe, actualizamos el estado.
             onChange={(e) => setUsername(e.target.value)}
-            // Permite ingresar al chat presionando Enter
-            // en lugar de tener que hacer click en el botón.
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 joinChat();
@@ -208,14 +185,10 @@ function App() {
               <strong>{m.username}</strong>: {m.message}
             </p>
           ))}
-          {/* // Este elemento funciona como punto de referencia
-        // para poder llevar el scroll hasta el final de los mensajes. */}
           <div ref={messagesEndRef}></div>
         </div>
         <div className="input-container">
           <input
-            // Usamos la misma referencia para poder devolver
-            // automáticamente el foco al campo después de enviar.
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
