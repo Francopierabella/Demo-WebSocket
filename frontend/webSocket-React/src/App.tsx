@@ -14,36 +14,24 @@ function App() {
   const [users, setUsers] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [username, setUsername] = useState("");
-
-  // Indica si el usuario ya ingresó al chat.
   const [joined, setJoined] = useState(false);
-
-  // Referencia al final del contenedor de mensajes.
-  // Se utiliza para poder hacer scroll automático hacia el último mensaje.
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Referencia al input del mensaje.
-  // Permite darle foco automáticamente después de enviar un mensaje.
   const inputRef = useRef<HTMLInputElement>(null);
 
   // useEffect se ejecuta una vez cuando el componente se monta.
   // Acá establecemos la conexión WebSocket con el backend.
   useEffect(() => {
-    // Creamos una nueva conexión WebSocket con nuestro servidor.
     const host = window.location.hostname || "localhost";
     const ws = new WebSocket(`ws://${host}:3000`);
-    // Se ejecuta cuando la conexión WebSocket se establece correctamente.
     ws.onopen = () => {
       console.log("Conectado al servidor");
     };
-    // Se ejecuta automáticamente cada vez que el servidor
-    // envía un mensaje al cliente, es decir, 
-    // cuando se ejecuta => client.send() esto se ejecuta
+    // onMessage: Se ejecuta automáticamente cada vez que el servidor envía un mensaje.
+    // Ejemplo: cuando el servidor ejecuta client.send()
     ws.onmessage = (event) => {
       // El servidor envía los datos como JSON.
       // Los convertimos nuevamente en un objeto JavaScript.
       const data = JSON.parse(event.data);
-      console.log("EVENT: ", data);
       // Analizamos el tipo de evento para decidir qué hacer.
       switch (data.type) {
         // EVENTO: WELCOME
@@ -99,14 +87,11 @@ function App() {
     // como joinChat() o sendMessage().
     setSocket(ws);
 
-    // Función de limpieza del useEffect.
-    // Se ejecuta cuando el componente se desmonta.
-    // Cerramos la conexión para evitar dejar un socket abierto.
+    // cuando el componente se desmonta cierro la conexion websocket
     return () => {
       ws.close();
     };
-    // El array vacío indica que este efecto se ejecuta solamente
-    // cuando el componente se monta.
+    // El array de dependencias vacío indica que este efecto se ejecuta solamente cuando el componente se monta.
   }, []);
 
   useEffect(() => {
@@ -130,8 +115,6 @@ function App() {
     // trim() elimina espacios al principio y al final.
     if (username.trim() === "") return;
     // Enviamos al servidor un evento de tipo JOIN.
-    // JSON.stringify() convierte el objeto JavaScript en JSON
-    // para poder transmitirlo mediante WebSocket.
     socket.send(
       JSON.stringify({
         type: "JOIN",
@@ -173,15 +156,13 @@ function App() {
 
   function leaveChat() {
     if (!socket || socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify({ type: "LEAVE" }));
     // le aviso al servidor que abandono el chat
+    socket.send(JSON.stringify({ type: "LEAVE" }));
     setJoined(false);
     setMessages([]);
   }
 
   // PANTALLA DE INGRESO
-  // Mientras joined sea false mostramos únicamente
-  // el formulario para ingresar al chat.
   if (!joined) {
     return (
       <div className="login-container">
@@ -191,9 +172,6 @@ function App() {
           <p>Bienvenido al chat en tiempo real</p>
           <input
             type="text"
-            // Asociamos este input con inputRef.
-            // Esto permite acceder al elemento directamente
-            // desde JavaScript mediante inputRef.current.
             ref={inputRef}
             placeholder="Ingresá tu nombre..."
             // El valor del input está controlado por el estado username.
@@ -226,8 +204,8 @@ function App() {
         <button className="btn-leave" onClick={leaveChat}> Salir del chat </button>
         <div className="messages">
           {messages.map((m, index) => (
-            <p className={"message"} key={index}>
-              <strong>{m.username}</strong> : {m.message}
+            <p className={m.username === "Sistema" ? "system-message" : "message"} key={index}>
+              <strong>{m.username}</strong>: {m.message}
             </p>
           ))}
           {/* // Este elemento funciona como punto de referencia

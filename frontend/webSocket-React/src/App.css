@@ -106,7 +106,8 @@ input {
     background: #fafafa;
 }
 
-.message {
+.message,
+.system-message {
     background: white;
     padding: 10px;
     border-radius: 8px;
@@ -116,6 +117,12 @@ input {
 
 .message strong {
     color: #0077ff;
+}
+
+.system-message strong {
+    color: black;
+    font-weight: bolder;
+    font-style: italic;
 }
 
 .input-container {
